@@ -1,0 +1,6 @@
+module Pods_PoseDetection {
+  umbrella header "Pods-PoseDetection-umbrella.h"
+
+  export *
+  module * { export * }
+}
