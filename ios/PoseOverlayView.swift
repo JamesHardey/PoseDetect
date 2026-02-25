@@ -188,7 +188,7 @@ class PoseOverlayView: UIView {
         for (start, end) in connections {
             // Default to green unless accuracy indicates otherwise
             var lineColor = UIColor.green.cgColor
-            var lineWidth: CGFloat = 4.0
+            var lineWidth: CGFloat = 2.0
             
             // Make ankle/foot connections more prominent
             let footConnections: [(MLKitJointName, MLKitJointName)] = [
@@ -197,7 +197,7 @@ class PoseOverlayView: UIView {
                 (.leftHeel, .leftFootIndex), (.rightHeel, .rightFootIndex)
             ]
             if footConnections.contains(where: { $0 == start && $1 == end }) {
-                lineWidth = 6.0
+                lineWidth = 3.0
                 lineColor = UIColor.cyan.cgColor
             }
             
@@ -252,13 +252,14 @@ class PoseOverlayView: UIView {
         for (joint, point) in landmarks {
             // Default to green unless accuracy indicates otherwise
             var dotColor = UIColor.green.cgColor
-            var radius: CGFloat = 8.0
+            var radius: CGFloat = 4.0
             
             if let acc = accuracy {
                 let isAccurate: Bool
                 switch joint {
                 // Face landmarks always green
-                case .nose, .leftEye, .rightEye, .leftEar, .rightEar, .mouthLeft, .mouthRight:
+                case .nose, .leftEye, .rightEye, .leftEar, .rightEar, .mouthLeft, .mouthRight,
+                     .leftEyeInner, .leftEyeOuter, .rightEyeInner, .rightEyeOuter:
                     isAccurate = true
                 // Left arm landmarks - use left elbow accuracy as proxy
                 case .leftShoulder, .leftElbow, .leftWrist, .leftThumb, .leftIndex, .leftPinky:
@@ -269,11 +270,11 @@ class PoseOverlayView: UIView {
                 // Legs / hips - keep green (not validated in this view)
                 case .leftHip, .leftKnee, .rightHip, .rightKnee:
                     isAccurate = true
-                // Ankle/foot landmarks - make them more prominent with larger radius and cyan color
+                // Ankle/foot landmarks - cyan color
                 case .leftAnkle, .rightAnkle, .leftHeel, .leftFootIndex, .rightHeel, .rightFootIndex:
                     isAccurate = true
-                    radius = 12.0  // Larger radius for feet
-                    dotColor = UIColor.cyan.cgColor  // Distinct color for feet
+                    radius = 6.0
+                    dotColor = UIColor.cyan.cgColor
                 default:
                     isAccurate = true
                 }
