@@ -514,15 +514,20 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
     private func processFrontPose(_ landmarks: PoseLandmarks, imageSize: CGSize) {
         let result = bodyPositionChecker.checkPoseDetailed(landmarks)
 
-        // Voice feedback — only when not already capturing
-        if !isCapturing {
-            voiceFeedback.provideFeedback(result.feedback)
+        if isCapturing {
+            // Real-time pose guard: cancel countdown immediately if pose breaks
+            if !result.isValid || !feetInFrame(landmarks, imageSize: imageSize) {
+                cancelCountdown(reason: "Front pose broke during countdown")
+            }
+            return
         }
 
+        // Voice feedback when not counting down
+        voiceFeedback.provideFeedback(result.feedback)
+
         // Feet must be in-frame AND full-body check must pass before triggering countdown
-        if result.isValid && !isCapturing && feetInFrame(landmarks, imageSize: imageSize) {
+        if result.isValid && feetInFrame(landmarks, imageSize: imageSize) {
             sendStatusEvent(status: "ready_to_capture", message: "Ready to capture front pose!")
-            voiceFeedback.provideFeedback("Capturing in 3 seconds")
             startCountdown(for: .frontPose)
         }
     }
@@ -530,8 +535,9 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
     private func processSidePose(_ landmarks: PoseLandmarks, imageSize: CGSize) {
         // Ensure person is detected (in frame) before side checks
         if !poseValidator.isValidPose(landmarks) {
-            // Only provide feedback if not capturing to avoid spam
-            if !isCapturing {
+            if isCapturing {
+                cancelCountdown(reason: "Person left frame during side countdown")
+            } else {
                 voiceFeedback.provideFeedback("Please move into the frame")
             }
             return
@@ -539,7 +545,9 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
 
         // Require feet visible/in-frame before proceeding
         guard feetInFrame(landmarks, imageSize: imageSize) else {
-            if !isCapturing {
+            if isCapturing {
+                cancelCountdown(reason: "Feet left frame during side countdown")
+            } else {
                 voiceFeedback.provideFeedback("Keep your feet in the frame")
             }
             return
@@ -549,15 +557,22 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         let armsSide = sidePoseValidator.areArmsSideways(landmarks, imageSize: imageSize)
         let legsSide = sidePoseValidator.areLegsSideways(landmarks, imageSize: imageSize)
 
+        if isCapturing {
+            // Real-time pose guard: cancel countdown immediately if side pose breaks
+            if !isSide || !armsSide || !legsSide {
+                cancelCountdown(reason: "Side pose broke during countdown")
+            }
+            return
+        }
+
         // Person still facing camera — tell them to turn
-        if !isSide && !isCapturing {
+        if !isSide {
             voiceFeedback.provideFeedback("Turn sideways, face left or right")
             return
         }
 
-        if isSide && armsSide && legsSide && !isCapturing {
+        if isSide && armsSide && legsSide {
             sendStatusEvent(status: "ready_to_capture_side", message: "Ready to capture side pose!")
-            voiceFeedback.provideFeedback("Capturing side pose in 3 seconds")
             startCountdown(for: .sidePose)
             return
         }
@@ -595,62 +610,39 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
 
             self.countdownLabel.isHidden = false
             self.countdownLabel.text = "\(self.countdownValue)"
-            // Speak the initial countdown
-            self.voiceFeedback.provideFeedback("\(self.countdownValue)")
 
-            // 2 second intervals give voice feedback time to complete before next count
+            // Speak the initial count ("3") — no pre-announcement so voice is clean
+            self.voiceFeedback.provideFeedback("3")
+
+            // 2-second intervals: gives voice time to finish each number and
+            // keeps the pace comfortable (not too fast) for maintaining the pose.
             self.countdownTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
                 guard let self = self else {
                     timer.invalidate()
                     return
                 }
 
-                // Before decrementing, ensure pose still meets requirements for the stage
-                var stillValid = false
-                if self.currentStage == .frontPose {
-                    // Re-evaluate using BodyPositionChecker logic
-                    let (isValid, _) = self.bodyPositionChecker.checkPose(self.poseOverlayView.getCurrentLandmarks() ?? [:])
-                    stillValid = isValid
-                } else {
-                    // Side pose: ensure person in frame and side pose validity
-                    let currentLandmarks = self.poseOverlayView.getCurrentLandmarks() ?? [:]
-                    if let size = self.latestImageSize, self.poseValidator.isValidPose(currentLandmarks) {
-                        stillValid = self.sidePoseValidator.isValidSidePose(currentLandmarks, imageSize: size)
-                    } else {
-                        stillValid = false
-                    }
-                }
-
-                if !stillValid {
-                    // Cancel countdown and notify - will restart automatically when pose is valid again
-                    timer.invalidate()
-                    self.countdownTimer = nil
-                    self.isCapturing = false
-                    self.countdownLabel.isHidden = true
-                    self.countdownValue = 3
-                    print("⚠️ Countdown cancelled - pose became invalid")
-                    self.sendStatusEvent(status: "capture_cancelled", message: "Hold your pose steady")
-                    self.voiceFeedback.provideFeedback("Hold your pose steady")
-                    return
-                }
+                // NOTE: Real-time pose cancellation is handled every frame inside
+                // processFrontPose / processSidePose, so we only need the timer
+                // for decrementing the visible counter and speaking each number.
 
                 self.countdownValue -= 1
 
                 if self.countdownValue > 0 {
                     self.countdownLabel.text = "\(self.countdownValue)"
-                    // Note: No need to refresh overlay here - captureOutput() already updates it continuously
-                    // with the latest landmarks from the camera, even during countdown
-                    
-                    // Speak remaining second (will respect min interval)
+                    // Speak each remaining number
                     self.voiceFeedback.provideFeedback("\(self.countdownValue)")
                 } else {
-                    // Reached zero - hold briefly before capture so user sees final frame
+                    // Reached zero — announce capture, then snap the photo
                     timer.invalidate()
                     self.countdownTimer = nil
                     self.countdownLabel.isHidden = true
 
-                    // Small pause so the camera/overlay stabilizes and user sees final pose
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                    // Announce that the picture is being taken
+                    self.voiceFeedback.provideFeedback("Capturing!")
+
+                    // Allow the voice to start before the capture shutter fires
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         self.captureImage(for: stage)
                     }
                 }

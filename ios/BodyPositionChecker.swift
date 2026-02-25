@@ -86,14 +86,15 @@ public class BodyPositionChecker {
         var armGuidance: [JointName: String] = [:]
 
         if !armResult.left.isAccurate {
-            // Mark entire left arm red
-            let msg = armResult.left.message ?? "Adjust your left arm"
+            // armResult.left == ML Kit's leftShoulder == person's RIGHT arm (front-camera mirror)
+            let msg = armResult.left.message ?? "Adjust your right arm"
             armGuidance[.leftShoulder] = msg
             armGuidance[.leftElbow]    = msg
             armGuidance[.leftWrist]    = msg
         }
         if !armResult.right.isAccurate {
-            let msg = armResult.right.message ?? "Adjust your right arm"
+            // armResult.right == ML Kit's rightShoulder == person's LEFT arm (front-camera mirror)
+            let msg = armResult.right.message ?? "Adjust your left arm"
             armGuidance[.rightShoulder] = msg
             armGuidance[.rightElbow]    = msg
             armGuidance[.rightWrist]    = msg
@@ -111,9 +112,11 @@ public class BodyPositionChecker {
                     feedback = armResult.left.message ?? armResult.right.message ?? "Adjust both arms"
                 }
             } else if !armResult.left.isAccurate {
-                feedback = armResult.left.message ?? "Adjust your left arm"
+                // ML Kit left == person's right arm (mirrored front camera)
+                feedback = armResult.left.message ?? "Adjust your right arm"
             } else {
-                feedback = armResult.right.message ?? "Adjust your right arm"
+                // ML Kit right == person's left arm (mirrored front camera)
+                feedback = armResult.right.message ?? "Adjust your left arm"
             }
             return CheckResult(isValid: false,
                                feedback: feedback,

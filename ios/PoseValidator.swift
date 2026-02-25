@@ -39,9 +39,9 @@ public class PoseValidator {
     
     // Reference pose values matching A-pose/T-pose reference image
     struct ReferencePose {
-        // Arms extended roughly horizontal (80° abduction from body vertical)
-        let shoulderAngle: Double = 80.0
-        let shoulderTolerance: Double = 20.0      // Accepts 60°–100° (clearly outward)
+        // Arms extended at ~65° abduction from body vertical (hip→shoulder→elbow)
+        let shoulderAngle: Double = 65.0
+        let shoulderTolerance: Double = 15.0      // Accepts 50°–80° (clearly outward)
         let elbowAngle: Double = 180.0            // Fully straight arm
         let elbowTolerance: Double = 20.0         // 160°–180° acceptable
         let spineAngle: Double = 0.0
@@ -166,8 +166,10 @@ public class PoseValidator {
               let rWrist    = landmarks[.rightWrist],
               let rHip      = landmarks[.rightHip] else { return nil }
 
-        let left  = checkArm(shoulder: lShoulder, elbow: lElbow, wrist: lWrist, hip: lHip, side: "left")
-        let right = checkArm(shoulder: rShoulder, elbow: rElbow, wrist: rWrist, hip: rHip, side: "right")
+        // Front camera (selfie): ML Kit's "left" landmark appears on the person's RIGHT side
+        // in the mirrored preview, so we swap the spoken side labels to match user perception.
+        let left  = checkArm(shoulder: lShoulder, elbow: lElbow, wrist: lWrist, hip: lHip, side: "right")
+        let right = checkArm(shoulder: rShoulder, elbow: rElbow, wrist: rWrist, hip: rHip, side: "left")
         return (left, right)
     }
 
