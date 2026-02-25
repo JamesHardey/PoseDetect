@@ -39,9 +39,10 @@ public class PoseValidator {
     
     // Reference pose values matching A-pose/T-pose reference image
     struct ReferencePose {
-        // Arms at ~45° abduction from body vertical (hip→shoulder→elbow) — relaxed A-pose
-        let shoulderAngle: Double = 45.0
-        let shoulderTolerance: Double = 10.0      // Accepts 35°–55° from body vertical
+        // Arms at ~47.5° abduction from body vertical (hip→shoulder→elbow) — relaxed A-pose
+        // Acceptable range: 35°–60°  →  centre = 47.5°, tolerance = ±12.5°
+        let shoulderAngle: Double = 47.5
+        let shoulderTolerance: Double = 12.5      // Accepts exactly 35°–60° from body vertical
         let elbowAngle: Double = 180.0            // Fully straight arm
         let elbowTolerance: Double = 20.0         // 160°–180° acceptable
         let spineAngle: Double = 0.0
@@ -134,11 +135,11 @@ public class PoseValidator {
         }
         if armTooLow {
             return ArmFeedback(isAccurate: false,
-                               message: "Raise your \(cap) arm — lift it about 45 degrees out from your body")
+                               message: "Raise your \(cap) arm — lift it halfway out to the side")
         }
         if armTooHigh {
             return ArmFeedback(isAccurate: false,
-                               message: "Lower your \(cap) arm — bring it down to about 45 degrees")
+                               message: "Lower your \(cap) arm — bring it to about halfway out from your body")
         }
         if !elbowStraight {
             return ArmFeedback(isAccurate: false,
@@ -147,10 +148,10 @@ public class PoseValidator {
         // Abduction angle off but spread/height look ok — arm angle off
         if abductionAngle < referencePose.shoulderAngle - referencePose.shoulderTolerance {
             return ArmFeedback(isAccurate: false,
-                               message: "Lift your \(side) arm out — about 45 degrees from your body")
+                               message: "Lift your \(side) arm further from your body — aim halfway out")
         } else {
             return ArmFeedback(isAccurate: false,
-                               message: "Lower your \(side) arm — bring it closer to 45 degrees")
+                               message: "Lower your \(side) arm slightly — aim halfway out from your body")
         }
     }
 
