@@ -201,6 +201,8 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 self?.captureSession?.startRunning()
                 DispatchQueue.main.async {
+                    // Keep screen on during pose detection
+                    UIApplication.shared.isIdleTimerDisabled = true
                     self?.sendStatusEvent(status: "camera_started", message: "Camera started and ready!")
                 }
             }
@@ -729,6 +731,10 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                  // CRITICAL: Stop capture session immediately to prevent camera pipeline crash
                  self.captureSession?.stopRunning()
                  print("🛑 Capture session stopped")
+                 // Restore idle timer now that capture is done
+                 DispatchQueue.main.async {
+                     UIApplication.shared.isIdleTimerDisabled = false
+                 }
 
                  // Aggressive memory cleanup before navigation to prevent Result screen hang
                  autoreleasepool {
@@ -860,11 +866,23 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
     
+    override func willMove(toWindow newWindow: UIWindow?) {
+        super.willMove(toWindow: newWindow)
+        if newWindow == nil {
+            // View is being removed — restore idle timer
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
+
     deinit {
         captureSession?.stopRunning()
         latestSampleBuffer = nil
         countdownTimer?.invalidate()
         countdownTimer = nil
         voiceFeedback.stop()
+        // Ensure idle timer is always restored
+        DispatchQueue.main.async {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
 }
