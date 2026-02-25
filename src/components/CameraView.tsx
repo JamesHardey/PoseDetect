@@ -17,7 +17,7 @@ import CameraXModule from '../modules/CameraXModule';
 interface CameraViewProps {
   style?: ViewStyle;
   cameraType?: 'front' | 'back';
-  onBothCaptured?: () => void;
+  onBothCaptured?: (params: { imageUri: string; sideImageUri: string }) => void;
 }
 
 const NativeCameraView = requireNativeComponent<CameraViewProps>('CameraView');
@@ -175,11 +175,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
       cameraType={cameraType}
       onBothCaptured={(event: any) => {
         console.log('🎯 NativeCameraView onBothCaptured event received:', event);
-        console.log('   Event nativeEvent:', event.nativeEvent);
-        
+        const native = event?.nativeEvent ?? {};
+        console.log('   imageUri:', native.imageUri);
+        console.log('   sideImageUri:', native.sideImageUri);
+
         if (onBothCaptured) {
-          console.log('✅ Calling parent onBothCaptured callback');
-          onBothCaptured();
+          console.log('✅ Calling parent onBothCaptured callback with params');
+          onBothCaptured({
+            imageUri: native.imageUri || '',
+            sideImageUri: native.sideImageUri || '',
+          });
         } else {
           console.log('❌ No parent onBothCaptured callback set');
         }

@@ -549,6 +549,12 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         let armsSide = sidePoseValidator.areArmsSideways(landmarks, imageSize: imageSize)
         let legsSide = sidePoseValidator.areLegsSideways(landmarks, imageSize: imageSize)
 
+        // Person still facing camera — tell them to turn
+        if !isSide && !isCapturing {
+            voiceFeedback.provideFeedback("Turn sideways, face left or right")
+            return
+        }
+
         if isSide && armsSide && legsSide && !isCapturing {
             sendStatusEvent(status: "ready_to_capture_side", message: "Ready to capture side pose!")
             voiceFeedback.provideFeedback("Capturing side pose in 3 seconds")
@@ -705,7 +711,7 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                 sendStatusEvent(status: "front_pose_captured", message: "Front pose captured! Turn sideways...")
 
                 // Voice feedback will handle main thread dispatch internally
-                voiceFeedback.provideFeedback("Front pose captured")
+                voiceFeedback.provideFeedback("Front pose captured! Now turn sideways, face left or right")
 
                 currentStage = .sidePose
                 isCapturing = false
@@ -730,35 +736,27 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                  sendImagesToReactNative()
                  print("✅ sendImagesToReactNative() completed")
 
-                 // CRITICAL: Stop capture session immediately to prevent camera pipeline crash
-                 self.captureSession?.stopRunning()
-                 print("🛑 Capture session stopped")
-                 // Restore idle timer now that capture is done
-                 DispatchQueue.main.async {
-                     UIApplication.shared.isIdleTimerDisabled = false
-                 }
-
-                 // Aggressive memory cleanup before navigation to prevent Result screen hang
-                 autoreleasepool {
-                     self.latestSampleBuffer = nil
-                 }
-                 
-                 // Clear overlay and reset detection state so RN preview can take over
-                 DispatchQueue.main.async {
-                     print("🧹 Clearing overlay and resetting state...")
-                     self.poseOverlayView.updatePose(nil, imageSize: .zero, accuracy: nil, perfect: false, countdown: 0, counting: false, mirrored: false, guidance: nil, stage: nil)
-                     self.poseOverlayView.setNeedsDisplay()
-                     self.isCapturing = false
-                     
-                     // Reset to front pose for next capture session
-                     self.currentStage = .frontPose
-                     self.frontImagePath = nil
-                     self.sideImagePath = nil
-                     print("✅ State reset completed - ready for next capture")
-                 }
-
-                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                     self.resetDetectionState()
+                 // Stop capture session on a background thread so the main thread stays
+                 // free for navigation and UI updates (stopRunning() can block briefly).
+                 DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                     guard let self = self else { return }
+                     self.captureSession?.stopRunning()
+                     print("🛑 Capture session stopped")
+                     DispatchQueue.main.async {
+                         UIApplication.shared.isIdleTimerDisabled = false
+                         self.latestSampleBuffer = nil
+                         print("🧹 Clearing overlay and resetting state...")
+                         self.poseOverlayView.updatePose(nil, imageSize: .zero, accuracy: nil,
+                             perfect: false, countdown: 0, counting: false, mirrored: false,
+                             guidance: nil, stage: nil)
+                         self.poseOverlayView.setNeedsDisplay()
+                         self.isCapturing = false
+                         self.currentStage = .frontPose
+                         self.frontImagePath = nil
+                         self.sideImagePath = nil
+                         self.resetDetectionState()
+                         print("✅ State reset completed - ready for next capture")
+                     }
                  }
               }
             
