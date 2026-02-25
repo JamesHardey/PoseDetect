@@ -6,11 +6,8 @@ import {
   View,
   Text,
   Button,
-  TouchableOpacity,
   Platform,
   PermissionsAndroid,
-  UIManager,
-  findNodeHandle,
 } from 'react-native';
 import CameraXModule from '../modules/CameraXModule';
 
@@ -117,23 +114,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     } catch (error) {
       console.error('Error requesting camera permission:', error);
       setError(`Error: ${error}`);
-    }
-  };
-
-  const handleViewResults = () => {
-    if (onBothCaptured) {
-      const viewId = findNodeHandle(cameraViewRef.current);
-      if (viewId) {
-        UIManager.dispatchViewManagerCommand(
-          viewId,
-          (
-            UIManager.getViewManagerConfig('CameraView').Commands
-              .navigateToResult as any
-          ).toString(),
-          [],
-        );
-      }
-      onBothCaptured();
     }
   };
 
