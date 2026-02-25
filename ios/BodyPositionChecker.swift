@@ -4,76 +4,131 @@ import CoreGraphics
 
 public class BodyPositionChecker {
     private let poseValidator = PoseValidator()
-    
+
     public init() {}
-    
-    public func checkPose(_ landmarks: PoseLandmarks) -> (isValid: Bool, feedback: String) {
-        // Priority 1: Check if feet are visible (matching Android's foot visibility check)
-        let hasLeftAnkle = landmarks[.leftAnkle]?.confidence ?? 0 > 0.3
-        let hasRightAnkle = landmarks[.rightAnkle]?.confidence ?? 0 > 0.3
-        let feetVisible = hasLeftAnkle || hasRightAnkle
-        
-        // Check if head is visible
-        let headVisible = (landmarks[.nose]?.confidence ?? 0) > 0.3
-        
-        // Check if knees are visible
-        let kneesVisible = (landmarks[.leftKnee]?.confidence ?? 0 > 0.3) || (landmarks[.rightKnee]?.confidence ?? 0 > 0.3)
-        
+
+    // ── Full result including per-arm guidance for the overlay ──────────────
+    public struct CheckResult {
+        public let isValid: Bool
+        public let feedback: String
+        /// Joints to highlight red on the overlay  (nil = nothing to highlight)
+        public let guidanceJoints: [JointName: String]?
+    }
+
+    // ── Main entry point ────────────────────────────────────────────────────
+    public func checkPoseDetailed(_ landmarks: PoseLandmarks) -> CheckResult {
+
+        // ── PRIORITY 1: Full body must be in frame ──────────────────────────
+        // Head (nose) AND both ankles must be visible with adequate confidence.
+        let headConf   = landmarks[.nose]?.confidence       ?? 0
+        let lAnkleConf = landmarks[.leftAnkle]?.confidence  ?? 0
+        let rAnkleConf = landmarks[.rightAnkle]?.confidence ?? 0
+        let headVisible  = headConf   > 0.4
+        let feetVisible  = lAnkleConf > 0.4 || rAnkleConf > 0.4
+        let kneesVisible = (landmarks[.leftKnee]?.confidence  ?? 0) > 0.3
+                        || (landmarks[.rightKnee]?.confidence ?? 0) > 0.3
+
+        if !headVisible && !feetVisible {
+            return CheckResult(isValid: false,
+                               feedback: "Step into the frame \u2014 show your full body",
+                               guidanceJoints: nil)
+        }
+        if !headVisible {
+            return CheckResult(isValid: false,
+                               feedback: "Move back \u2014 your head must be visible",
+                               guidanceJoints: nil)
+        }
         if !feetVisible && kneesVisible {
-            // Knees visible but feet are not - user is too close
-            return (false, "Move back so your feet are visible")
+            return CheckResult(isValid: false,
+                               feedback: "Move back \u2014 your feet must be visible",
+                               guidanceJoints: nil)
         }
-        
-        if !headVisible && feetVisible {
-            // Feet visible but head is not - user is too far
-            return (false, "Move forward so your head is visible")
+        if !feetVisible {
+            return CheckResult(isValid: false,
+                               feedback: "Step back so your full body fits in the frame",
+                               guidanceJoints: nil)
         }
-        
-        if !feetVisible && !headVisible {
-            // Neither feet nor head visible
-            return (false, "Please stand in front of camera")
-        }
-        
-        // First check if basic pose is valid (matches Android isPersonFullyDetected)
+
+        // ── PRIORITY 2: Critical skeleton detected ──────────────────────────
         if !poseValidator.isValidPose(landmarks) {
-            return (false, "Please stand in front of camera")
+            return CheckResult(isValid: false,
+                               feedback: "Stand in front of the camera so your full body is visible",
+                               guidanceJoints: nil)
         }
 
-        // NOTE: Body-centered check removed to avoid blocking users who cannot perfectly center.
-
-        // Calculate posture metrics (matches Android calculatePostureMetrics)
+        // ── PRIORITY 3: Legs straight + feet apart ──────────────────────────
         guard let metrics = poseValidator.calculatePostureMetrics(landmarks) else {
-            return (false, "Cannot calculate posture metrics")
+            return CheckResult(isValid: false,
+                               feedback: "Cannot read your pose \u2014 ensure good lighting",
+                               guidanceJoints: nil)
         }
-
-        // Compare with reference (matches Android compareWithReference + isPoseAccurate)
         let accuracy = poseValidator.compareWithReference(metrics)
 
-        // Check shoulder angles (arms should be at ~45° from body, matching Android)
-        if !accuracy.shoulderAccurateLeft || !accuracy.shoulderAccurateRight {
-            return (false, "Extend your arms away from your body")
-        }
-
-        // Check if elbows are straight (matching Android)
-        if !accuracy.elbowAccurateLeft || !accuracy.elbowAccurateRight {
-            return (false, "Keep your arms straight")
-        }
-
-        // Check spine alignment (matching Android)
-        // if !accuracy.spineAccurate {
-        //     return (false, "Stand up straight")
-        // }
-
-        // Check hip/leg angles (matching Android)
         if !accuracy.hipAccurateLeft || !accuracy.hipAccurateRight {
-            return (false, "Keep your legs straight")
+            return CheckResult(isValid: false,
+                               feedback: "Stand straight \u2014 keep both legs straight",
+                               guidanceJoints: [.leftHip: "straighten", .rightHip: "straighten",
+                                               .leftKnee: "straighten", .rightKnee: "straighten"])
         }
-
-        // Check feet separation (matching Android leg separation check)
         if !poseValidator.areFeetApart(landmarks) {
-            return (false, "Spread your feet shoulder-width apart")
+            return CheckResult(isValid: false,
+                               feedback: "Spread your feet roughly shoulder-width apart",
+                               guidanceJoints: [.leftAnkle: "spread", .rightAnkle: "spread"])
         }
 
-        return (true, "Perfect! Hold still...")
+        // ── PRIORITY 4: Arm position (most detail) ──────────────────────────
+        guard let armResult = poseValidator.checkBothArms(landmarks) else {
+            return CheckResult(isValid: false,
+                               feedback: "Show your arms clearly",
+                               guidanceJoints: nil)
+        }
+
+        var armGuidance: [JointName: String] = [:]
+
+        if !armResult.left.isAccurate {
+            // Mark entire left arm red
+            let msg = armResult.left.message ?? "Adjust your left arm"
+            armGuidance[.leftShoulder] = msg
+            armGuidance[.leftElbow]    = msg
+            armGuidance[.leftWrist]    = msg
+        }
+        if !armResult.right.isAccurate {
+            let msg = armResult.right.message ?? "Adjust your right arm"
+            armGuidance[.rightShoulder] = msg
+            armGuidance[.rightElbow]    = msg
+            armGuidance[.rightWrist]    = msg
+        }
+
+        if !armResult.left.isAccurate || !armResult.right.isAccurate {
+            // Provide the most specific feedback message available
+            let feedback: String
+            if !armResult.left.isAccurate && !armResult.right.isAccurate {
+                // Both arms wrong — use left arm message but prefix with "Both arms: "
+                if armResult.left.message == armResult.right.message,
+                   let msg = armResult.left.message {
+                    feedback = "Both arms: \(msg.lowercased())"
+                } else {
+                    feedback = armResult.left.message ?? armResult.right.message ?? "Adjust both arms"
+                }
+            } else if !armResult.left.isAccurate {
+                feedback = armResult.left.message ?? "Adjust your left arm"
+            } else {
+                feedback = armResult.right.message ?? "Adjust your right arm"
+            }
+            return CheckResult(isValid: false,
+                               feedback: feedback,
+                               guidanceJoints: armGuidance.isEmpty ? nil : armGuidance)
+        }
+
+        // ── All checks passed ────────────────────────────────────────────────
+        return CheckResult(isValid: true,
+                           feedback: "Perfect! Hold still\u2026",
+                           guidanceJoints: nil)
+    }
+
+    // ── Legacy simple wrapper kept for backward-compat ───────────────────────
+    public func checkPose(_ landmarks: PoseLandmarks) -> (isValid: Bool, feedback: String) {
+        let r = checkPoseDetailed(landmarks)
+        return (r.isValid, r.feedback)
     }
 }

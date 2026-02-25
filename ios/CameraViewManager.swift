@@ -436,15 +436,16 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     // Build guidance messages per joint when not accurate (front vs side)
                     var guidance: [JointName: String]? = nil
                     if self.currentStage == .frontPose {
-                        if let acc = accuracy {
+                        // Use checkPoseDetailed to get per-arm directional guidance
+                        let detailedResult = self.bodyPositionChecker.checkPoseDetailed(points)
+                        if let gj = detailedResult.guidanceJoints, !gj.isEmpty {
+                            guidance = gj
+                        } else if let acc = accuracy {
+                            // Fallback: use accuracy-based guidance for legs/spine
                             var g: [JointName: String] = [:]
-                            if !acc.shoulderAccurateLeft { g[.leftShoulder] = "Move left arm outward" }
-                            if !acc.shoulderAccurateRight { g[.rightShoulder] = "Move right arm outward" }
-                            if !acc.elbowAccurateLeft { g[.leftElbow] = "Straighten left arm" }
-                            if !acc.elbowAccurateRight { g[.rightElbow] = "Straighten right arm" }
                             if !acc.spineAccurate { g[.neck] = "Stand up straight" }
-                            if !acc.hipAccurateLeft { g[.leftHip] = "Keep legs straight" }
-                            if !acc.hipAccurateRight { g[.rightHip] = "Keep legs straight" }
+                            if !acc.hipAccurateLeft  { g[.leftHip] = "Keep legs straight"; g[.leftKnee] = "straighten" }
+                            if !acc.hipAccurateRight { g[.rightHip] = "Keep legs straight"; g[.rightKnee] = "straighten" }
                             if !g.isEmpty { guidance = g }
                         }
                     } else {
@@ -511,18 +512,16 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     private func processFrontPose(_ landmarks: PoseLandmarks, imageSize: CGSize) {
-        let (isValid, feedback) = bodyPositionChecker.checkPose(landmarks)
+        let result = bodyPositionChecker.checkPoseDetailed(landmarks)
 
-        // Voice feedback will handle main thread dispatch internally
-        // Only provide feedback if not already capturing to avoid spamming
+        // Voice feedback — only when not already capturing
         if !isCapturing {
-            voiceFeedback.provideFeedback(feedback)
+            voiceFeedback.provideFeedback(result.feedback)
         }
 
-        // Only start countdown if pose valid, feet are in-frame, and not already counting down
-        if isValid && !isCapturing && feetInFrame(landmarks, imageSize: imageSize) {
+        // Feet must be in-frame AND full-body check must pass before triggering countdown
+        if result.isValid && !isCapturing && feetInFrame(landmarks, imageSize: imageSize) {
             sendStatusEvent(status: "ready_to_capture", message: "Ready to capture front pose!")
-            // Announce countdown and start it
             voiceFeedback.provideFeedback("Capturing in 3 seconds")
             startCountdown(for: .frontPose)
         }
