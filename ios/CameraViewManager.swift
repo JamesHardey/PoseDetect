@@ -515,8 +515,8 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         let result = bodyPositionChecker.checkPoseDetailed(landmarks)
 
         if isCapturing {
-            // Real-time pose guard: cancel countdown immediately if pose breaks
-            if !result.isValid || !feetInFrame(landmarks, imageSize: imageSize) {
+            // Real-time pose guard: cancel countdown if head or either foot leaves frame
+            if !result.isValid || !fullBodyInFrame(landmarks, imageSize: imageSize) {
                 cancelCountdown(reason: "Front pose broke during countdown")
             }
             return
@@ -525,8 +525,8 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         // Voice feedback when not counting down
         voiceFeedback.provideFeedback(result.feedback)
 
-        // Feet must be in-frame AND full-body check must pass before triggering countdown
-        if result.isValid && feetInFrame(landmarks, imageSize: imageSize) {
+        // Head AND both feet must be in frame, plus full pose check, before countdown starts
+        if result.isValid && fullBodyInFrame(landmarks, imageSize: imageSize) {
             sendStatusEvent(status: "ready_to_capture", message: "Ready to capture front pose!")
             startCountdown(for: .frontPose)
         }
@@ -543,12 +543,16 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
             return
         }
 
-        // Require feet visible/in-frame before proceeding
-        guard feetInFrame(landmarks, imageSize: imageSize) else {
+        // Head AND both feet must be visible before proceeding
+        guard fullBodyInFrame(landmarks, imageSize: imageSize) else {
             if isCapturing {
-                cancelCountdown(reason: "Feet left frame during side countdown")
+                cancelCountdown(reason: "Head or feet left frame during side countdown")
             } else {
-                voiceFeedback.provideFeedback("Keep your feet in the frame")
+                if !headInFrame(landmarks, imageSize: imageSize) {
+                    voiceFeedback.provideFeedback("Move back — your head must be visible")
+                } else {
+                    voiceFeedback.provideFeedback("Move back — both feet must be in the frame")
+                }
             }
             return
         }
@@ -825,7 +829,7 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 
-    // Ensure required ankle landmarks are in frame with adequate confidence
+    // Ensure BOTH ankle landmarks are within the frame with adequate confidence
     private func feetInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize, minConfidence: Float = 0.5) -> Bool {
         let keys: [JointName] = [.leftAnkle, .rightAnkle]
         for key in keys {
@@ -837,6 +841,19 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
             }
         }
         return true
+    }
+
+    // Ensure the head (nose) is within the frame with adequate confidence
+    private func headInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize, minConfidence: Float = 0.5) -> Bool {
+        guard let nose = landmarks[.nose], nose.confidence >= minConfidence else { return false }
+        let x = nose.location.x
+        let y = nose.location.y
+        return x >= 0 && y >= 0 && x <= imageSize.width && y <= imageSize.height
+    }
+
+    // Both head AND both feet must be in frame — the mandatory pre-countdown check
+    private func fullBodyInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize) -> Bool {
+        return headInFrame(landmarks, imageSize: imageSize) && feetInFrame(landmarks, imageSize: imageSize)
     }
 
     // ML Kit orientation helper per docs

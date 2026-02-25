@@ -23,12 +23,15 @@ public class BodyPositionChecker {
         let headConf   = landmarks[.nose]?.confidence       ?? 0
         let lAnkleConf = landmarks[.leftAnkle]?.confidence  ?? 0
         let rAnkleConf = landmarks[.rightAnkle]?.confidence ?? 0
-        let headVisible  = headConf   > 0.4
-        let feetVisible  = lAnkleConf > 0.4 || rAnkleConf > 0.4
-        let kneesVisible = (landmarks[.leftKnee]?.confidence  ?? 0) > 0.3
-                        || (landmarks[.rightKnee]?.confidence ?? 0) > 0.3
+        let headVisible      = headConf   > 0.4
+        // BOTH ankles must be visible — one foot hidden means the frame is too tight
+        let bothFeetVisible  = lAnkleConf > 0.4 && rAnkleConf > 0.4
+        let oneFeetVisible   = lAnkleConf > 0.4 || rAnkleConf > 0.4
+        let kneesVisible     = (landmarks[.leftKnee]?.confidence  ?? 0) > 0.3
+                            || (landmarks[.rightKnee]?.confidence ?? 0) > 0.3
 
-        if !headVisible && !feetVisible {
+        // Hard gate: head AND both feet must be in frame before anything else is evaluated
+        if !headVisible && !oneFeetVisible {
             return CheckResult(isValid: false,
                                feedback: "Step into the frame — show your full body",
                                guidanceJoints: nil)
@@ -38,14 +41,14 @@ public class BodyPositionChecker {
                                feedback: "Move back — your head must be visible",
                                guidanceJoints: nil)
         }
-        if !feetVisible && kneesVisible {
+        if !bothFeetVisible && kneesVisible {
             return CheckResult(isValid: false,
-                               feedback: "Move back — your feet must be visible",
+                               feedback: "Move back — both feet must be fully visible",
                                guidanceJoints: nil)
         }
-        if !feetVisible {
+        if !bothFeetVisible {
             return CheckResult(isValid: false,
-                               feedback: "Step back so your full body fits in the frame",
+                               feedback: "Step back so your head and both feet are in frame",
                                guidanceJoints: nil)
         }
 

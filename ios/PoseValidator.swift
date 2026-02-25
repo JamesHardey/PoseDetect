@@ -39,9 +39,9 @@ public class PoseValidator {
     
     // Reference pose values matching A-pose/T-pose reference image
     struct ReferencePose {
-        // Arms extended at ~65° abduction from body vertical (hip→shoulder→elbow)
-        let shoulderAngle: Double = 65.0
-        let shoulderTolerance: Double = 15.0      // Accepts 50°–80° (clearly outward)
+        // Arms at ~45° abduction from body vertical (hip→shoulder→elbow) — relaxed A-pose
+        let shoulderAngle: Double = 45.0
+        let shoulderTolerance: Double = 10.0      // Accepts 35°–55° from body vertical
         let elbowAngle: Double = 180.0            // Fully straight arm
         let elbowTolerance: Double = 20.0         // 160°–180° acceptable
         let spineAngle: Double = 0.0
@@ -104,13 +104,13 @@ public class PoseValidator {
         // ── 3. Arm height relative to shoulder ────────────────────────────
         // In image coordinates Y increases downward.
         // wristDeltaY > 0 means wrist is BELOW shoulder.
-        // For reference pose (arms roughly horizontal): |deltaY/armLength| should be < 0.45
-        // Too low  (wrist drops far below shoulder): deltaY / armLength > 0.45  → raise arm
-        // Too high (wrist far above shoulder):       deltaY / armLength < -0.3  → lower arm
+        // At 45° abduction from body vertical, cos(45°) ≈ 0.707 — wrist sits well below shoulder.
+        // Too low  (arm nearly straight down): deltaY / armLength > 0.90  → lift arm out
+        // Too high (wrist above shoulder):     deltaY / armLength < -0.30 → lower arm
         let wristDeltaY = armLength > 0
             ? Double(wrist.location.y - shoulder.location.y) / Double(armLength)
             : 0.0
-        let armTooLow  = wristDeltaY >  0.45
+        let armTooLow  = wristDeltaY >  0.90
         let armTooHigh = wristDeltaY < -0.30
 
         // ── 4. Shoulder abduction angle (hip→shoulder→elbow) ──────────────
@@ -134,11 +134,11 @@ public class PoseValidator {
         }
         if armTooLow {
             return ArmFeedback(isAccurate: false,
-                               message: "Raise your \(cap) arm up to shoulder height")
+                               message: "Raise your \(cap) arm — lift it about 45 degrees out from your body")
         }
         if armTooHigh {
             return ArmFeedback(isAccurate: false,
-                               message: "Lower your \(cap) arm down to shoulder height")
+                               message: "Lower your \(cap) arm — bring it down to about 45 degrees")
         }
         if !elbowStraight {
             return ArmFeedback(isAccurate: false,
@@ -147,10 +147,10 @@ public class PoseValidator {
         // Abduction angle off but spread/height look ok — arm angle off
         if abductionAngle < referencePose.shoulderAngle - referencePose.shoulderTolerance {
             return ArmFeedback(isAccurate: false,
-                               message: "Lift your \(side) arm further away from your body")
+                               message: "Lift your \(side) arm out — about 45 degrees from your body")
         } else {
             return ArmFeedback(isAccurate: false,
-                               message: "Lower your \(side) arm slightly toward shoulder height")
+                               message: "Lower your \(side) arm — bring it closer to 45 degrees")
         }
     }
 
