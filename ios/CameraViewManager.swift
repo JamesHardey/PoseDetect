@@ -282,14 +282,13 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         let height = CVPixelBufferGetHeight(pixelBuffer)
 
         processingQueue.async { [weak self] in
+            guard let self = self else { return }
             autoreleasepool {
-                guard let self = self else { return }
-
                 // ML Kit Pose Detection (streaming mode per docs)
                 let visionImage = VisionImage(buffer: sampleBuffer)
                 visionImage.orientation = self.mlkitImageOrientation(
                     deviceOrientation: UIDevice.current.orientation,
-                    cameraPosition: self.currentCamera?.position ?? .back
+                    cameraPosition: self.currentCamera?.position ?? AVCaptureDevice.Position.back
                 )
 
                 self.poseDetector.process(visionImage) { [weak self] poses, error in
