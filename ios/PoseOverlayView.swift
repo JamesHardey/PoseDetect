@@ -163,8 +163,21 @@ class PoseOverlayView: UIView {
             (.leftHip, .leftKnee),
             (.leftKnee, .leftAnkle),
             (.rightHip, .rightKnee),
-            (.rightKnee, .rightAnkle)
-            // Note: Hand/foot detail connections removed - not available in iOS ML Kit
+            (.rightKnee, .rightAnkle),
+            // Foot connections
+            (.leftAnkle, .leftHeel),
+            (.leftHeel, .leftFootIndex),
+            (.rightAnkle, .rightHeel),
+            (.rightHeel, .rightFootIndex),
+            // Hand connections
+            (.leftWrist, .leftThumb),
+            (.leftWrist, .leftIndex),
+            (.leftWrist, .leftPinky),
+            (.rightWrist, .rightThumb),
+            (.rightWrist, .rightIndex),
+            (.rightWrist, .rightPinky),
+            // Mouth connection
+            (.mouthLeft, .mouthRight)
         ]
         
         for (start, end) in connections {
@@ -172,10 +185,15 @@ class PoseOverlayView: UIView {
             var lineColor = UIColor.green.cgColor
             var lineWidth: CGFloat = 4.0
             
-            // Make ankle connections more prominent
-            if (start == .leftKnee && end == .leftAnkle) || (start == .rightKnee && end == .rightAnkle) {
-                lineWidth = 6.0  // Thicker lines for leg-to-ankle connections
-                lineColor = UIColor.cyan.cgColor  // Distinct color
+            // Make ankle/foot connections more prominent
+            let footConnections: [(MLKitJointName, MLKitJointName)] = [
+                (.leftKnee, .leftAnkle), (.rightKnee, .rightAnkle),
+                (.leftAnkle, .leftHeel), (.rightAnkle, .rightHeel),
+                (.leftHeel, .leftFootIndex), (.rightHeel, .rightFootIndex)
+            ]
+            if footConnections.contains(where: { $0 == start && $1 == end }) {
+                lineWidth = 6.0
+                lineColor = UIColor.cyan.cgColor
             }
             
             context.setLineWidth(lineWidth)
@@ -187,9 +205,11 @@ class PoseOverlayView: UIView {
                      (.leftEye, .leftEar), (.rightEye, .rightEar):
                     isAccurate = true
                 // Arm connections - use elbow accuracy
-                case (.leftShoulder, .leftElbow), (.leftElbow, .leftWrist):
+                case (.leftShoulder, .leftElbow), (.leftElbow, .leftWrist),
+                     (.leftWrist, .leftThumb), (.leftWrist, .leftIndex), (.leftWrist, .leftPinky):
                     isAccurate = acc.elbowAccurateLeft
-                case (.rightShoulder, .rightElbow), (.rightElbow, .rightWrist):
+                case (.rightShoulder, .rightElbow), (.rightElbow, .rightWrist),
+                     (.rightWrist, .rightThumb), (.rightWrist, .rightIndex), (.rightWrist, .rightPinky):
                     isAccurate = acc.elbowAccurateRight
                 // Body/leg and shoulder/hip lines — keep green (not validated here)
                 case (.leftShoulder, .leftHip), (.leftHip, .leftKnee), (.leftKnee, .leftAnkle),

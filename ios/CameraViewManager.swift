@@ -333,8 +333,18 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     add(.rightKnee, .rightKnee)
                     add(.leftAnkle, .leftAnkle)
                     add(.rightAnkle, .rightAnkle)
-                    // Note: .leftHeel, .rightHeel, .leftFootIndex, .rightFootIndex are not accessible 
-                    // via PoseLandmarkType enum in iOS ML Kit v11, despite documentation mentioning them
+                    // Foot landmarks (available in ML Kit iOS v3+)
+                    add(.leftHeel, .leftHeel)
+                    add(.rightHeel, .rightHeel)
+                    add(.leftFootIndex, .leftFootIndex)
+                    add(.rightFootIndex, .rightFootIndex)
+                    // Hand landmarks
+                    add(.leftPinky, .leftPinky)
+                    add(.rightPinky, .rightPinky)
+                    add(.leftIndex, .leftIndex)
+                    add(.rightIndex, .rightIndex)
+                    add(.leftThumb, .leftThumb)
+                    add(.rightThumb, .rightThumb)
                     
                     // Throttled landmark logging to confirm ankle/feet visibility without spamming
                     frameCounter &+= 1
