@@ -334,16 +334,16 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     add(.rightKnee, .rightKnee)
                     add(.leftAnkle, .leftAnkle)
                     add(.rightAnkle, .rightAnkle)
-                    // Foot landmarks (available in ML Kit iOS v3+)
+                    // Foot landmarks
                     add(.leftHeel, .leftHeel)
                     add(.rightHeel, .rightHeel)
-                    add(.leftFootIndex, .leftFootIndex)
-                    add(.rightFootIndex, .rightFootIndex)
+                    add(.leftToe, .leftFootIndex)
+                    add(.rightToe, .rightFootIndex)
                     // Hand landmarks
-                    add(.leftPinky, .leftPinky)
-                    add(.rightPinky, .rightPinky)
-                    add(.leftIndex, .leftIndex)
-                    add(.rightIndex, .rightIndex)
+                    add(.leftPinkyFinger, .leftPinky)
+                    add(.rightPinkyFinger, .rightPinky)
+                    add(.leftIndexFinger, .leftIndex)
+                    add(.rightIndexFinger, .rightIndex)
                     add(.leftThumb, .leftThumb)
                     add(.rightThumb, .rightThumb)
                     
@@ -833,7 +833,6 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 
     // Ensure required ankle landmarks are in frame with adequate confidence
-    // (heels/foot indices not accessible via iOS ML Kit PoseLandmarkType enum)
     private func feetInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize, minConfidence: Float = 0.5) -> Bool {
         let keys: [JointName] = [.leftAnkle, .rightAnkle]
         for key in keys {
