@@ -30,17 +30,17 @@ public class BodyPositionChecker {
 
         if !headVisible && !feetVisible {
             return CheckResult(isValid: false,
-                               feedback: "Step into the frame \u2014 show your full body",
+                               feedback: "Step into the frame — show your full body",
                                guidanceJoints: nil)
         }
         if !headVisible {
             return CheckResult(isValid: false,
-                               feedback: "Move back \u2014 your head must be visible",
+                               feedback: "Move back — your head must be visible",
                                guidanceJoints: nil)
         }
         if !feetVisible && kneesVisible {
             return CheckResult(isValid: false,
-                               feedback: "Move back \u2014 your feet must be visible",
+                               feedback: "Move back — your feet must be visible",
                                guidanceJoints: nil)
         }
         if !feetVisible {
@@ -59,14 +59,14 @@ public class BodyPositionChecker {
         // ── PRIORITY 3: Legs straight + feet apart ──────────────────────────
         guard let metrics = poseValidator.calculatePostureMetrics(landmarks) else {
             return CheckResult(isValid: false,
-                               feedback: "Cannot read your pose \u2014 ensure good lighting",
+                               feedback: "Cannot read your pose — ensure good lighting",
                                guidanceJoints: nil)
         }
         let accuracy = poseValidator.compareWithReference(metrics)
 
         if !accuracy.hipAccurateLeft || !accuracy.hipAccurateRight {
             return CheckResult(isValid: false,
-                               feedback: "Stand straight \u2014 keep both legs straight",
+                               feedback: "Stand straight — keep both legs straight",
                                guidanceJoints: [.leftHip: "straighten", .rightHip: "straighten",
                                                .leftKnee: "straighten", .rightKnee: "straighten"])
         }
@@ -122,7 +122,7 @@ public class BodyPositionChecker {
 
         // ── All checks passed ────────────────────────────────────────────────
         return CheckResult(isValid: true,
-                           feedback: "Perfect! Hold still\u2026",
+                           feedback: "Perfect! Hold still...",
                            guidanceJoints: nil)
     }
 
