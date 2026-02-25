@@ -34,9 +34,11 @@
 		@"RNSScreenStack": NSClassFromString(@"RNSScreenStackView"), // react-native-screens
 		@"RNSSearchBar": NSClassFromString(@"RNSSearchBar"), // react-native-screens
 		@"RNSStackScreen": NSClassFromString(@"RNSStackScreenComponentView"), // react-native-screens
-		@"RNSScreenStackHost": NSClassFromString(@"RNSScreenStackHostComponentView"), // react-native-screens
-		@"RNSBottomTabsScreen": NSClassFromString(@"RNSBottomTabsScreenComponentView"), // react-native-screens
-		@"RNSBottomTabs": NSClassFromString(@"RNSBottomTabsHostComponentView"), // react-native-screens
+		@"RNSStackHost": NSClassFromString(@"RNSStackHostComponentView"), // react-native-screens
+		@"RNSTabsScreen": NSClassFromString(@"RNSTabsScreenComponentView"), // react-native-screens
+		@"RNSTabsHost": NSClassFromString(@"RNSTabsHostComponentView"), // react-native-screens
+		@"RNSTabsBottomAccessory": NSClassFromString(@"RNSTabsBottomAccessoryComponentView"), // react-native-screens
+		@"RNSTabsBottomAccessoryContent": NSClassFromString(@"RNSTabsBottomAccessoryContentComponentView"), // react-native-screens
 		@"RNSSplitViewHost": NSClassFromString(@"RNSSplitViewHostComponentView"), // react-native-screens
 		@"RNSSplitViewScreen": NSClassFromString(@"RNSSplitViewScreenComponentView"), // react-native-screens
 		@"RNSSafeAreaView": NSClassFromString(@"RNSSafeAreaViewComponentView"), // react-native-screens

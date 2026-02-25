@@ -19,6 +19,7 @@ framework module MLKitPoseDetectionAccurate {
   link framework "GLKit"
   link framework "Metal"
   link framework "MetalKit"
+  link framework "OSLog"
   link framework "OpenGLES"
   link framework "QuartzCore"
   link framework "Security"

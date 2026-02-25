@@ -1,0 +1,89 @@
+{
+  "" : {
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseDetection-primary.dia",
+    "emit-module-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseDetection-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseDetection-primary-emit-module.dia",
+    "pch" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseDetection-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseDetection-primary.swiftdeps"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/BodyPositionChecker.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/BodyPositionChecker~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/CameraViewManager.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/CameraViewManager-f1b386c77a71a4187a3c352a233ba13d~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/PoseDetection/AppDelegate.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/AppDelegate~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/PoseOverlayView.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseOverlayView~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/PoseValidator.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/PoseValidator~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/SidePoseValidator.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/SidePoseValidator~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/VoiceFeedbackProvider.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/VoiceFeedbackProvider~partial.swiftmodule"
+  },
+  "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/user/Downloads/PoseProject/PoseDetect/ios/build/PoseDetection.build/Release-iphoneos/PoseDetection.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}
