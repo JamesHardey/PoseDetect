@@ -383,6 +383,10 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     // Add eye landmarks for drawing
                     add(.leftEye, .leftEye)
                     add(.rightEye, .rightEye)
+                    add(.leftEyeInner, .leftEyeInner)
+                    add(.leftEyeOuter, .leftEyeOuter)
+                    add(.rightEyeInner, .rightEyeInner)
+                    add(.rightEyeOuter, .rightEyeOuter)
                     
                     // Add ear landmarks (matching Android)
                     add(.leftEar, .leftEar)

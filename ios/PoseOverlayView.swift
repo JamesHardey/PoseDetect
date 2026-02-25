@@ -11,6 +11,7 @@ public struct RecognizedPointCompat {
 // Use custom ML Kit joint names (supports all 33 landmarks)
 public enum MLKitJointName: Hashable {
     case nose, leftEye, rightEye, leftEar, rightEar
+    case leftEyeInner, leftEyeOuter, rightEyeInner, rightEyeOuter
     case leftShoulder, rightShoulder, leftElbow, rightElbow
     case leftWrist, rightWrist, leftPinky, rightPinky
     case leftIndex, rightIndex, leftThumb, rightThumb
@@ -146,6 +147,10 @@ class PoseOverlayView: UIView {
     private func drawConnections(context: CGContext, landmarks: PoseLandmarks, scaleX: CGFloat, scaleY: CGFloat) {
         let connections: [(MLKitJointName, MLKitJointName)] = [
             // Face connections
+            (.leftEyeInner, .leftEye),
+            (.leftEye, .leftEyeOuter),
+            (.rightEyeInner, .rightEye),
+            (.rightEye, .rightEyeOuter),
             (.leftEye, .rightEye),
             (.leftEye, .nose),
             (.rightEye, .nose),
