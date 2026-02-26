@@ -15,11 +15,9 @@
 
 namespace facebook::react {
 
-using RNSBottomTabsScreenState = StateData;
-
-using RNSScreenStackHostState = StateData;
-
 using RNSSplitViewHostState = StateData;
+
+using RNSStackHostState = StateData;
 
 using RNSStackScreenState = StateData;
 
@@ -34,5 +32,9 @@ using RNSScreenNavigationContainerState = StateData;
 using RNSScreenStackState = StateData;
 
 using RNSSearchBarState = StateData;
+
+using RNSTabsBottomAccessoryContentState = StateData;
+
+using RNSTabsScreenState = StateData;
 
 } // namespace facebook::react

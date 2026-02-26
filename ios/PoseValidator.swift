@@ -37,26 +37,143 @@ public class PoseValidator {
         public let legSeparationAngle: Double
     }
     
-    // Reference pose values matching Android exactly
+    // Reference pose values matching A-pose/T-pose reference image
     struct ReferencePose {
-        let shoulderAngle: Double = 45.0          // Arms at 45° from body (Android value)
-        let shoulderTolerance: Double = 30.0      // Android: shoulderAngleTolerance (allows 45-75 degree range)
-        let elbowAngle: Double = 180.0            // Straight arms (Android: elbowAngleLeft/Right)
-        let elbowTolerance: Double = 20.0         // Android: elbowAngleTolerance
-        let spineAngle: Double = 0.0              // Vertical spine (Android value)
-        let spineTolerance: Double = 10.0         // Android: spineAngleTolerance
-        let hipAngle: Double = 180.0              // Straight legs (Android: hipAngleLeft/Right)
-        let hipTolerance: Double = 15.0           // Android: hipAngleTolerance
-        let shoulderLevelTolerance: Double = 30.0 // Android: shoulderLevelTolerance
-        let legSeparationAngle: Double = 45.0     // Android value
-        let legSeparationTolerance: Double = 15.0 // Android value
+        // Arms at ~47.5° abduction from body vertical (hip→shoulder→elbow) — relaxed A-pose
+        // Acceptable range: 35°–60°  →  centre = 47.5°, tolerance = ±12.5°
+        let shoulderAngle: Double = 47.5
+        let shoulderTolerance: Double = 12.5      // Accepts exactly 35°–60° from body vertical
+        let elbowAngle: Double = 180.0            // Fully straight arm
+        let elbowTolerance: Double = 20.0         // 160°–180° acceptable
+        let spineAngle: Double = 0.0
+        let spineTolerance: Double = 10.0
+        let hipAngle: Double = 180.0
+        let hipTolerance: Double = 15.0
+        let shoulderLevelTolerance: Double = 30.0
+        let legSeparationAngle: Double = 45.0
+        let legSeparationTolerance: Double = 15.0
+        // Minimum lateral spread: wrist must be ≥60% of arm length away from shoulder horizontally
+        let armSpreadRatio: Double = 0.55
     }
     
     let referencePose = ReferencePose()
-    
+
     public init() {}
-    
-    // Calculate angle between three points (matching Android's calculateAngle)
+
+    // Per-arm directional feedback result
+    public struct ArmFeedback {
+        public let isAccurate: Bool
+        /// Human-readable directional hint, nil when arm is correct
+        public let message: String?
+    }
+
+    /// Checks a single arm and returns whether it is in the correct A/T-pose position,
+    /// plus a specific directional cue if not.
+    ///
+    /// - Parameters:
+    ///   - shoulder: shoulder landmark
+    ///   - elbow:    elbow landmark
+    ///   - wrist:    wrist landmark
+    ///   - hip:      same-side hip (for abduction angle baseline)
+    ///   - side:     "left" or "right" (used in feedback text)
+    public func checkArm(shoulder: RecognizedPointCompat,
+                         elbow:    RecognizedPointCompat,
+                         wrist:    RecognizedPointCompat,
+                         hip:      RecognizedPointCompat,
+                         side:     String) -> ArmFeedback {
+
+        // ── 1. Elbow straightness ──────────────────────────────────────────
+        let elbowAngle = calculateAngle(
+            first: shoulder.location,
+            mid:   elbow.location,
+            last:  wrist.location
+        )
+        let elbowStraight = elbowAngle >= (referencePose.elbowAngle - referencePose.elbowTolerance)
+
+        // ── 2. Horizontal (lateral) spread ────────────────────────────────
+        // How much of the arm length is expressed as horizontal distance from shoulder → wrist.
+        // A properly extended sideways arm should have spread ≥ 55% of arm length.
+        let armLength = hypot(
+            wrist.location.x - shoulder.location.x,
+            wrist.location.y - shoulder.location.y
+        )
+        let lateralSpread = armLength > 0
+            ? abs(Double(wrist.location.x - shoulder.location.x)) / Double(armLength)
+            : 0.0
+        let armSpreadOk = lateralSpread >= referencePose.armSpreadRatio
+
+        // ── 3. Arm height relative to shoulder ────────────────────────────
+        // In image coordinates Y increases downward.
+        // wristDeltaY > 0 means wrist is BELOW shoulder.
+        // At 45° abduction from body vertical, cos(45°) ≈ 0.707 — wrist sits well below shoulder.
+        // Too low  (arm nearly straight down): deltaY / armLength > 0.90  → lift arm out
+        // Too high (wrist above shoulder):     deltaY / armLength < -0.30 → lower arm
+        let wristDeltaY = armLength > 0
+            ? Double(wrist.location.y - shoulder.location.y) / Double(armLength)
+            : 0.0
+        let armTooLow  = wristDeltaY >  0.90
+        let armTooHigh = wristDeltaY < -0.30
+
+        // ── 4. Shoulder abduction angle (hip→shoulder→elbow) ──────────────
+        let abductionAngle = calculateAngle(
+            first: hip.location,
+            mid:   shoulder.location,
+            last:  elbow.location
+        )
+        let abductionOk = abs(abductionAngle - referencePose.shoulderAngle) <= referencePose.shoulderTolerance
+
+        // ── Decision: arm is accurate if ALL checks pass ───────────────────
+        let isAccurate = elbowStraight && armSpreadOk && !armTooLow && !armTooHigh && abductionOk
+
+        if isAccurate { return ArmFeedback(isAccurate: true, message: nil) }
+
+        // ── Directional feedback: most impactful issue first ───────────────
+        let cap = side.capitalized
+        if !armSpreadOk {
+            return ArmFeedback(isAccurate: false,
+                               message: "Extend your \(side) arm directly out to the side")
+        }
+        if armTooLow {
+            return ArmFeedback(isAccurate: false,
+                               message: "Raise your \(cap) arm — lift it halfway out to the side")
+        }
+        if armTooHigh {
+            return ArmFeedback(isAccurate: false,
+                               message: "Lower your \(cap) arm — bring it to about halfway out from your body")
+        }
+        if !elbowStraight {
+            return ArmFeedback(isAccurate: false,
+                               message: "Straighten your \(side) arm — keep the elbow locked")
+        }
+        // Abduction angle off but spread/height look ok — arm angle off
+        if abductionAngle < referencePose.shoulderAngle - referencePose.shoulderTolerance {
+            return ArmFeedback(isAccurate: false,
+                               message: "Lift your \(side) arm further from your body — aim halfway out")
+        } else {
+            return ArmFeedback(isAccurate: false,
+                               message: "Lower your \(side) arm slightly — aim halfway out from your body")
+        }
+    }
+
+    /// Convenience: checks both arms and returns (left, right) ArmFeedback.
+    /// Returns nil if required landmarks are missing.
+    public func checkBothArms(_ landmarks: PoseLandmarks) -> (left: ArmFeedback, right: ArmFeedback)? {
+        guard let lShoulder = landmarks[.leftShoulder],
+              let lElbow    = landmarks[.leftElbow],
+              let lWrist    = landmarks[.leftWrist],
+              let lHip      = landmarks[.leftHip],
+              let rShoulder = landmarks[.rightShoulder],
+              let rElbow    = landmarks[.rightElbow],
+              let rWrist    = landmarks[.rightWrist],
+              let rHip      = landmarks[.rightHip] else { return nil }
+
+        // Front camera (selfie): ML Kit's "left" landmark appears on the person's RIGHT side
+        // in the mirrored preview, so we swap the spoken side labels to match user perception.
+        let left  = checkArm(shoulder: lShoulder, elbow: lElbow, wrist: lWrist, hip: lHip, side: "right")
+        let right = checkArm(shoulder: rShoulder, elbow: rElbow, wrist: rWrist, hip: rHip, side: "left")
+        return (left, right)
+    }
+
     private func calculateAngle(first: CGPoint, mid: CGPoint, last: CGPoint) -> Double {
         let radians = atan2(last.y - mid.y, last.x - mid.x) -
                      atan2(first.y - mid.y, first.x - mid.x)

@@ -18,28 +18,6 @@
 
 namespace facebook::react {
 
-JSI_EXPORT extern const char RNSBottomTabsScreenComponentName[];
-
-/*
- * `ShadowNode` for <RNSBottomTabsScreen> component.
- */
-using RNSBottomTabsScreenShadowNode = ConcreteViewShadowNode<
-    RNSBottomTabsScreenComponentName,
-    RNSBottomTabsScreenProps,
-    RNSBottomTabsScreenEventEmitter,
-    RNSBottomTabsScreenState>;
-
-JSI_EXPORT extern const char RNSScreenStackHostComponentName[];
-
-/*
- * `ShadowNode` for <RNSScreenStackHost> component.
- */
-using RNSScreenStackHostShadowNode = ConcreteViewShadowNode<
-    RNSScreenStackHostComponentName,
-    RNSScreenStackHostProps,
-    RNSScreenStackHostEventEmitter,
-    RNSScreenStackHostState>;
-
 JSI_EXPORT extern const char RNSSplitViewHostComponentName[];
 
 /*
@@ -50,6 +28,17 @@ using RNSSplitViewHostShadowNode = ConcreteViewShadowNode<
     RNSSplitViewHostProps,
     RNSSplitViewHostEventEmitter,
     RNSSplitViewHostState>;
+
+JSI_EXPORT extern const char RNSStackHostComponentName[];
+
+/*
+ * `ShadowNode` for <RNSStackHost> component.
+ */
+using RNSStackHostShadowNode = ConcreteViewShadowNode<
+    RNSStackHostComponentName,
+    RNSStackHostProps,
+    RNSStackHostEventEmitter,
+    RNSStackHostState>;
 
 JSI_EXPORT extern const char RNSStackScreenComponentName[];
 
@@ -127,5 +116,27 @@ using RNSSearchBarShadowNode = ConcreteViewShadowNode<
     RNSSearchBarProps,
     RNSSearchBarEventEmitter,
     RNSSearchBarState>;
+
+JSI_EXPORT extern const char RNSTabsBottomAccessoryContentComponentName[];
+
+/*
+ * `ShadowNode` for <RNSTabsBottomAccessoryContent> component.
+ */
+using RNSTabsBottomAccessoryContentShadowNode = ConcreteViewShadowNode<
+    RNSTabsBottomAccessoryContentComponentName,
+    RNSTabsBottomAccessoryContentProps,
+    RNSTabsBottomAccessoryContentEventEmitter,
+    RNSTabsBottomAccessoryContentState>;
+
+JSI_EXPORT extern const char RNSTabsScreenComponentName[];
+
+/*
+ * `ShadowNode` for <RNSTabsScreen> component.
+ */
+using RNSTabsScreenShadowNode = ConcreteViewShadowNode<
+    RNSTabsScreenComponentName,
+    RNSTabsScreenProps,
+    RNSTabsScreenEventEmitter,
+    RNSTabsScreenState>;
 
 } // namespace facebook::react

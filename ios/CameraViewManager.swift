@@ -201,6 +201,8 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 self?.captureSession?.startRunning()
                 DispatchQueue.main.async {
+                    // Keep screen on during pose detection
+                    UIApplication.shared.isIdleTimerDisabled = true
                     self?.sendStatusEvent(status: "camera_started", message: "Camera started and ready!")
                 }
             }
@@ -280,14 +282,13 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         let height = CVPixelBufferGetHeight(pixelBuffer)
 
         processingQueue.async { [weak self] in
+            guard let self = self else { return }
             autoreleasepool {
-                guard let self = self else { return }
-
                 // ML Kit Pose Detection (streaming mode per docs)
                 let visionImage = VisionImage(buffer: sampleBuffer)
                 visionImage.orientation = self.mlkitImageOrientation(
                     deviceOrientation: UIDevice.current.orientation,
-                    cameraPosition: self.currentCamera?.position ?? .back
+                    cameraPosition: self.currentCamera?.position ?? AVCaptureDevice.Position.back
                 )
 
                 self.poseDetector.process(visionImage) { [weak self] poses, error in
@@ -333,8 +334,18 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     add(.rightKnee, .rightKnee)
                     add(.leftAnkle, .leftAnkle)
                     add(.rightAnkle, .rightAnkle)
-                    // Note: .leftHeel, .rightHeel, .leftFootIndex, .rightFootIndex are not accessible 
-                    // via PoseLandmarkType enum in iOS ML Kit v11, despite documentation mentioning them
+                    // Foot landmarks
+                    add(.leftHeel, .leftHeel)
+                    add(.rightHeel, .rightHeel)
+                    add(.leftToe, .leftFootIndex)
+                    add(.rightToe, .rightFootIndex)
+                    // Hand landmarks
+                    add(.leftPinkyFinger, .leftPinky)
+                    add(.rightPinkyFinger, .rightPinky)
+                    add(.leftIndexFinger, .leftIndex)
+                    add(.rightIndexFinger, .rightIndex)
+                    add(.leftThumb, .leftThumb)
+                    add(.rightThumb, .rightThumb)
                     
                     // Throttled landmark logging to confirm ankle/feet visibility without spamming
                     frameCounter &+= 1
@@ -372,6 +383,10 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     // Add eye landmarks for drawing
                     add(.leftEye, .leftEye)
                     add(.rightEye, .rightEye)
+                    add(.leftEyeInner, .leftEyeInner)
+                    add(.leftEyeOuter, .leftEyeOuter)
+                    add(.rightEyeInner, .rightEyeInner)
+                    add(.rightEyeOuter, .rightEyeOuter)
                     
                     // Add ear landmarks (matching Android)
                     add(.leftEar, .leftEar)
@@ -421,15 +436,16 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                     // Build guidance messages per joint when not accurate (front vs side)
                     var guidance: [JointName: String]? = nil
                     if self.currentStage == .frontPose {
-                        if let acc = accuracy {
+                        // Use checkPoseDetailed to get per-arm directional guidance
+                        let detailedResult = self.bodyPositionChecker.checkPoseDetailed(points)
+                        if let gj = detailedResult.guidanceJoints, !gj.isEmpty {
+                            guidance = gj
+                        } else if let acc = accuracy {
+                            // Fallback: use accuracy-based guidance for legs/spine
                             var g: [JointName: String] = [:]
-                            if !acc.shoulderAccurateLeft { g[.leftShoulder] = "Move left arm outward" }
-                            if !acc.shoulderAccurateRight { g[.rightShoulder] = "Move right arm outward" }
-                            if !acc.elbowAccurateLeft { g[.leftElbow] = "Straighten left arm" }
-                            if !acc.elbowAccurateRight { g[.rightElbow] = "Straighten right arm" }
                             if !acc.spineAccurate { g[.neck] = "Stand up straight" }
-                            if !acc.hipAccurateLeft { g[.leftHip] = "Keep legs straight" }
-                            if !acc.hipAccurateRight { g[.rightHip] = "Keep legs straight" }
+                            if !acc.hipAccurateLeft  { g[.leftHip] = "Keep legs straight"; g[.leftKnee] = "straighten" }
+                            if !acc.hipAccurateRight { g[.rightHip] = "Keep legs straight"; g[.rightKnee] = "straighten" }
                             if !g.isEmpty { guidance = g }
                         }
                     } else {
@@ -496,19 +512,22 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     private func processFrontPose(_ landmarks: PoseLandmarks, imageSize: CGSize) {
-        let (isValid, feedback) = bodyPositionChecker.checkPose(landmarks)
+        let result = bodyPositionChecker.checkPoseDetailed(landmarks)
 
-        // Voice feedback will handle main thread dispatch internally
-        // Only provide feedback if not already capturing to avoid spamming
-        if !isCapturing {
-            voiceFeedback.provideFeedback(feedback)
+        if isCapturing {
+            // Real-time pose guard: cancel countdown if head or either foot leaves frame
+            if !result.isValid || !fullBodyInFrame(landmarks, imageSize: imageSize) {
+                cancelCountdown(reason: "Front pose broke during countdown")
+            }
+            return
         }
 
-        // Only start countdown if pose valid, feet are in-frame, and not already counting down
-        if isValid && !isCapturing && feetInFrame(landmarks, imageSize: imageSize) {
+        // Voice feedback when not counting down
+        voiceFeedback.provideFeedback(result.feedback)
+
+        // Head AND both feet must be in frame, plus full pose check, before countdown starts
+        if result.isValid && fullBodyInFrame(landmarks, imageSize: imageSize) {
             sendStatusEvent(status: "ready_to_capture", message: "Ready to capture front pose!")
-            // Announce countdown and start it
-            voiceFeedback.provideFeedback("Capturing in 3 seconds")
             startCountdown(for: .frontPose)
         }
     }
@@ -516,17 +535,24 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
     private func processSidePose(_ landmarks: PoseLandmarks, imageSize: CGSize) {
         // Ensure person is detected (in frame) before side checks
         if !poseValidator.isValidPose(landmarks) {
-            // Only provide feedback if not capturing to avoid spam
-            if !isCapturing {
+            if isCapturing {
+                cancelCountdown(reason: "Person left frame during side countdown")
+            } else {
                 voiceFeedback.provideFeedback("Please move into the frame")
             }
             return
         }
 
-        // Require feet visible/in-frame before proceeding
-        guard feetInFrame(landmarks, imageSize: imageSize) else {
-            if !isCapturing {
-                voiceFeedback.provideFeedback("Keep your feet in the frame")
+        // Head AND both feet must be visible before proceeding
+        guard fullBodyInFrame(landmarks, imageSize: imageSize) else {
+            if isCapturing {
+                cancelCountdown(reason: "Head or feet left frame during side countdown")
+            } else {
+                if !headInFrame(landmarks, imageSize: imageSize) {
+                    voiceFeedback.provideFeedback("Move back — your head must be visible")
+                } else {
+                    voiceFeedback.provideFeedback("Move back — both feet must be in the frame")
+                }
             }
             return
         }
@@ -535,9 +561,22 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         let armsSide = sidePoseValidator.areArmsSideways(landmarks, imageSize: imageSize)
         let legsSide = sidePoseValidator.areLegsSideways(landmarks, imageSize: imageSize)
 
-        if isSide && armsSide && legsSide && !isCapturing {
+        if isCapturing {
+            // Real-time pose guard: cancel countdown immediately if side pose breaks
+            if !isSide || !armsSide || !legsSide {
+                cancelCountdown(reason: "Side pose broke during countdown")
+            }
+            return
+        }
+
+        // Person still facing camera — tell them to turn
+        if !isSide {
+            voiceFeedback.provideFeedback("Turn sideways, face left or right")
+            return
+        }
+
+        if isSide && armsSide && legsSide {
             sendStatusEvent(status: "ready_to_capture_side", message: "Ready to capture side pose!")
-            voiceFeedback.provideFeedback("Capturing side pose in 3 seconds")
             startCountdown(for: .sidePose)
             return
         }
@@ -575,62 +614,39 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
 
             self.countdownLabel.isHidden = false
             self.countdownLabel.text = "\(self.countdownValue)"
-            // Speak the initial countdown
-            self.voiceFeedback.provideFeedback("\(self.countdownValue)")
 
-            // 2 second intervals give voice feedback time to complete before next count
+            // Speak the initial count ("3") — no pre-announcement so voice is clean
+            self.voiceFeedback.provideFeedback("3")
+
+            // 2-second intervals: gives voice time to finish each number and
+            // keeps the pace comfortable (not too fast) for maintaining the pose.
             self.countdownTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
                 guard let self = self else {
                     timer.invalidate()
                     return
                 }
 
-                // Before decrementing, ensure pose still meets requirements for the stage
-                var stillValid = false
-                if self.currentStage == .frontPose {
-                    // Re-evaluate using BodyPositionChecker logic
-                    let (isValid, _) = self.bodyPositionChecker.checkPose(self.poseOverlayView.getCurrentLandmarks() ?? [:])
-                    stillValid = isValid
-                } else {
-                    // Side pose: ensure person in frame and side pose validity
-                    let currentLandmarks = self.poseOverlayView.getCurrentLandmarks() ?? [:]
-                    if let size = self.latestImageSize, self.poseValidator.isValidPose(currentLandmarks) {
-                        stillValid = self.sidePoseValidator.isValidSidePose(currentLandmarks, imageSize: size)
-                    } else {
-                        stillValid = false
-                    }
-                }
-
-                if !stillValid {
-                    // Cancel countdown and notify - will restart automatically when pose is valid again
-                    timer.invalidate()
-                    self.countdownTimer = nil
-                    self.isCapturing = false
-                    self.countdownLabel.isHidden = true
-                    self.countdownValue = 3
-                    print("⚠️ Countdown cancelled - pose became invalid")
-                    self.sendStatusEvent(status: "capture_cancelled", message: "Hold your pose steady")
-                    self.voiceFeedback.provideFeedback("Hold your pose steady")
-                    return
-                }
+                // NOTE: Real-time pose cancellation is handled every frame inside
+                // processFrontPose / processSidePose, so we only need the timer
+                // for decrementing the visible counter and speaking each number.
 
                 self.countdownValue -= 1
 
                 if self.countdownValue > 0 {
                     self.countdownLabel.text = "\(self.countdownValue)"
-                    // Note: No need to refresh overlay here - captureOutput() already updates it continuously
-                    // with the latest landmarks from the camera, even during countdown
-                    
-                    // Speak remaining second (will respect min interval)
+                    // Speak each remaining number
                     self.voiceFeedback.provideFeedback("\(self.countdownValue)")
                 } else {
-                    // Reached zero - hold briefly before capture so user sees final frame
+                    // Reached zero — announce capture, then snap the photo
                     timer.invalidate()
                     self.countdownTimer = nil
                     self.countdownLabel.isHidden = true
 
-                    // Small pause so the camera/overlay stabilizes and user sees final pose
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                    // Announce that the picture is being taken
+                    self.voiceFeedback.provideFeedback("Capturing!")
+
+                    // Allow the voice to start before the capture shutter fires
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         self.captureImage(for: stage)
                     }
                 }
@@ -691,7 +707,7 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                 sendStatusEvent(status: "front_pose_captured", message: "Front pose captured! Turn sideways...")
 
                 // Voice feedback will handle main thread dispatch internally
-                voiceFeedback.provideFeedback("Front pose captured")
+                voiceFeedback.provideFeedback("Front pose captured! Now turn sideways, face left or right")
 
                 currentStage = .sidePose
                 isCapturing = false
@@ -716,31 +732,27 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
                  sendImagesToReactNative()
                  print("✅ sendImagesToReactNative() completed")
 
-                 // CRITICAL: Stop capture session immediately to prevent camera pipeline crash
-                 self.captureSession?.stopRunning()
-                 print("🛑 Capture session stopped")
-
-                 // Aggressive memory cleanup before navigation to prevent Result screen hang
-                 autoreleasepool {
-                     self.latestSampleBuffer = nil
-                 }
-                 
-                 // Clear overlay and reset detection state so RN preview can take over
-                 DispatchQueue.main.async {
-                     print("🧹 Clearing overlay and resetting state...")
-                     self.poseOverlayView.updatePose(nil, imageSize: .zero, accuracy: nil, perfect: false, countdown: 0, counting: false, mirrored: false, guidance: nil, stage: nil)
-                     self.poseOverlayView.setNeedsDisplay()
-                     self.isCapturing = false
-                     
-                     // Reset to front pose for next capture session
-                     self.currentStage = .frontPose
-                     self.frontImagePath = nil
-                     self.sideImagePath = nil
-                     print("✅ State reset completed - ready for next capture")
-                 }
-
-                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                     self.resetDetectionState()
+                 // Stop capture session on a background thread so the main thread stays
+                 // free for navigation and UI updates (stopRunning() can block briefly).
+                 DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                     guard let self = self else { return }
+                     self.captureSession?.stopRunning()
+                     print("🛑 Capture session stopped")
+                     DispatchQueue.main.async {
+                         UIApplication.shared.isIdleTimerDisabled = false
+                         self.latestSampleBuffer = nil
+                         print("🧹 Clearing overlay and resetting state...")
+                         self.poseOverlayView.updatePose(nil, imageSize: .zero, accuracy: nil,
+                             perfect: false, countdown: 0, counting: false, mirrored: false,
+                             guidance: nil, stage: nil)
+                         self.poseOverlayView.setNeedsDisplay()
+                         self.isCapturing = false
+                         self.currentStage = .frontPose
+                         self.frontImagePath = nil
+                         self.sideImagePath = nil
+                         self.resetDetectionState()
+                         print("✅ State reset completed - ready for next capture")
+                     }
                  }
               }
             
@@ -817,8 +829,7 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 
-    // Ensure required ankle landmarks are in frame with adequate confidence
-    // (heels/foot indices not accessible via iOS ML Kit PoseLandmarkType enum)
+    // Ensure BOTH ankle landmarks are within the frame with adequate confidence
     private func feetInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize, minConfidence: Float = 0.5) -> Bool {
         let keys: [JointName] = [.leftAnkle, .rightAnkle]
         for key in keys {
@@ -830,6 +841,19 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
             }
         }
         return true
+    }
+
+    // Ensure the head (nose) is within the frame with adequate confidence
+    private func headInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize, minConfidence: Float = 0.5) -> Bool {
+        guard let nose = landmarks[.nose], nose.confidence >= minConfidence else { return false }
+        let x = nose.location.x
+        let y = nose.location.y
+        return x >= 0 && y >= 0 && x <= imageSize.width && y <= imageSize.height
+    }
+
+    // Both head AND both feet must be in frame — the mandatory pre-countdown check
+    private func fullBodyInFrame(_ landmarks: PoseLandmarks, imageSize: CGSize) -> Bool {
+        return headInFrame(landmarks, imageSize: imageSize) && feetInFrame(landmarks, imageSize: imageSize)
     }
 
     // ML Kit orientation helper per docs
@@ -850,11 +874,23 @@ class CameraView: UIView, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
     
+    override func willMove(toWindow newWindow: UIWindow?) {
+        super.willMove(toWindow: newWindow)
+        if newWindow == nil {
+            // View is being removed — restore idle timer
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
+
     deinit {
         captureSession?.stopRunning()
         latestSampleBuffer = nil
         countdownTimer?.invalidate()
         countdownTimer = nil
         voiceFeedback.stop()
+        // Ensure idle timer is always restored
+        DispatchQueue.main.async {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
 }

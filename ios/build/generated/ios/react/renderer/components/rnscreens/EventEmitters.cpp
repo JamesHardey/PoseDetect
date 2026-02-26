@@ -13,62 +13,6 @@
 
 namespace facebook::react {
 
-void RNSBottomTabsEventEmitter::onNativeFocusChange(OnNativeFocusChange event) const {
-  dispatchEvent("nativeFocusChange", [event=std::move(event)](jsi::Runtime &runtime) {
-    auto payload = jsi::Object(runtime);
-    payload.setProperty(runtime, "tabKey", event.tabKey);
-    return payload;
-  });
-}
-
-
-void RNSBottomTabsScreenEventEmitter::onLifecycleStateChange(OnLifecycleStateChange event) const {
-  dispatchEvent("lifecycleStateChange", [event=std::move(event)](jsi::Runtime &runtime) {
-    auto payload = jsi::Object(runtime);
-    payload.setProperty(runtime, "previousState", event.previousState);
-payload.setProperty(runtime, "newState", event.newState);
-    return payload;
-  });
-}
-
-
-void RNSBottomTabsScreenEventEmitter::onWillAppear(OnWillAppear event) const {
-  dispatchEvent("willAppear", [](jsi::Runtime &runtime) {
-    auto payload = jsi::Object(runtime);
-    
-    return payload;
-  });
-}
-
-
-void RNSBottomTabsScreenEventEmitter::onDidAppear(OnDidAppear event) const {
-  dispatchEvent("didAppear", [](jsi::Runtime &runtime) {
-    auto payload = jsi::Object(runtime);
-    
-    return payload;
-  });
-}
-
-
-void RNSBottomTabsScreenEventEmitter::onWillDisappear(OnWillDisappear event) const {
-  dispatchEvent("willDisappear", [](jsi::Runtime &runtime) {
-    auto payload = jsi::Object(runtime);
-    
-    return payload;
-  });
-}
-
-
-void RNSBottomTabsScreenEventEmitter::onDidDisappear(OnDidDisappear event) const {
-  dispatchEvent("didDisappear", [](jsi::Runtime &runtime) {
-    auto payload = jsi::Object(runtime);
-    
-    return payload;
-  });
-}
-
-
-
 
 void RNSSplitViewHostEventEmitter::onCollapse(OnCollapse event) const {
   dispatchEvent("collapse", [](jsi::Runtime &runtime) {
@@ -143,6 +87,7 @@ void RNSSplitViewScreenEventEmitter::onDidDisappear(OnDidDisappear event) const 
 }
 
 
+
 void RNSStackScreenEventEmitter::onWillAppear(OnWillAppear event) const {
   dispatchEvent("willAppear", [](jsi::Runtime &runtime) {
     auto payload = jsi::Object(runtime);
@@ -172,6 +117,24 @@ void RNSStackScreenEventEmitter::onWillDisappear(OnWillDisappear event) const {
 
 void RNSStackScreenEventEmitter::onDidDisappear(OnDidDisappear event) const {
   dispatchEvent("didDisappear", [](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    
+    return payload;
+  });
+}
+
+
+void RNSStackScreenEventEmitter::onDismiss(OnDismiss event) const {
+  dispatchEvent("dismiss", [event=std::move(event)](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    payload.setProperty(runtime, "isNativeDismiss", event.isNativeDismiss);
+    return payload;
+  });
+}
+
+
+void RNSStackScreenEventEmitter::onNativeDismissPrevented(OnNativeDismissPrevented event) const {
+  dispatchEvent("nativeDismissPrevented", [](jsi::Runtime &runtime) {
     auto payload = jsi::Object(runtime);
     
     return payload;
@@ -490,6 +453,72 @@ void RNSSearchBarEventEmitter::onClose(OnClose event) const {
 
 void RNSSearchBarEventEmitter::onOpen(OnOpen event) const {
   dispatchEvent("open", [](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    
+    return payload;
+  });
+}
+
+
+
+void RNSTabsBottomAccessoryEventEmitter::onEnvironmentChange(OnEnvironmentChange event) const {
+  dispatchEvent("environmentChange", [event=std::move(event)](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    payload.setProperty(runtime, "environment", toString(event.environment));
+    return payload;
+  });
+}
+
+
+void RNSTabsHostEventEmitter::onNativeFocusChange(OnNativeFocusChange event) const {
+  dispatchEvent("nativeFocusChange", [event=std::move(event)](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    payload.setProperty(runtime, "tabKey", event.tabKey);
+payload.setProperty(runtime, "repeatedSelectionHandledBySpecialEffect", event.repeatedSelectionHandledBySpecialEffect);
+    return payload;
+  });
+}
+
+
+void RNSTabsScreenEventEmitter::onLifecycleStateChange(OnLifecycleStateChange event) const {
+  dispatchEvent("lifecycleStateChange", [event=std::move(event)](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    payload.setProperty(runtime, "previousState", event.previousState);
+payload.setProperty(runtime, "newState", event.newState);
+    return payload;
+  });
+}
+
+
+void RNSTabsScreenEventEmitter::onWillAppear(OnWillAppear event) const {
+  dispatchEvent("willAppear", [](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    
+    return payload;
+  });
+}
+
+
+void RNSTabsScreenEventEmitter::onDidAppear(OnDidAppear event) const {
+  dispatchEvent("didAppear", [](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    
+    return payload;
+  });
+}
+
+
+void RNSTabsScreenEventEmitter::onWillDisappear(OnWillDisappear event) const {
+  dispatchEvent("willDisappear", [](jsi::Runtime &runtime) {
+    auto payload = jsi::Object(runtime);
+    
+    return payload;
+  });
+}
+
+
+void RNSTabsScreenEventEmitter::onDidDisappear(OnDidDisappear event) const {
+  dispatchEvent("didDisappear", [](jsi::Runtime &runtime) {
     auto payload = jsi::Object(runtime);
     
     return payload;

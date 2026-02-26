@@ -1,0 +1,79 @@
+# Dependencies
+node_modules/
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+
+# iOS
+ios/build/
+ios/Pods/
+ios/DerivedData/
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+
+# Android
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+*.keystore
+!debug.keystore
+
+# Ruby / CocoaPods vendor bundle
+vendor/bundle/
+Gemfile.lock
+
+# macOS metadata
+__MACOSX/
+.DS_Store
+*.DS_Store
+
+# Build artifacts & caches
+.gradle/
+build/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig.*
+
+# Metro bundler
+.metro-health-check*
+
+# Testing
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo

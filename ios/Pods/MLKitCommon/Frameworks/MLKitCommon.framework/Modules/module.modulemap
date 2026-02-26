@@ -9,6 +9,7 @@ framework module MLKitCommon {
   link framework "CoreFoundation"
   link framework "CoreTelephony"
   link framework "Foundation"
+  link framework "OSLog"
   link framework "QuartzCore"
   link framework "Security"
   link framework "SystemConfiguration"

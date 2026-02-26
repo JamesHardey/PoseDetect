@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,6 +22,9 @@ const CameraScreen: React.FC = () => {
     sideUri: string;
   } | null>(null);
   const [status, setStatus] = useState<any>('Waiting...');
+  // Ref prevents double-navigation if both onBothCaptured callback and
+  // DeviceEventEmitter fire near-simultaneously
+  const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
     console.log('CameraScreen: Setting up event listeners');
@@ -31,6 +34,7 @@ const CameraScreen: React.FC = () => {
       setBothCaptured(false);
       setCapturedUris(null);
       setStatus('Waiting...');
+      hasNavigatedRef.current = false;
     }
 
     // Listen for capture status updates
@@ -67,16 +71,21 @@ const CameraScreen: React.FC = () => {
       (event: { frontUri: string; sideUri: string }) => {
         console.log('🔔 CameraScreen: onBothImagesCaptured event received!');
         console.log('📸 Event data:', event);
-        console.log('   Front URI:', event.frontUri);
-        console.log('   Side URI:', event.sideUri);
 
-        setStatus('Images ready! Click to view results');
-
-        // Store URIs and show button
+        setStatus('Both poses captured!');
         setCapturedUris(event);
         setBothCaptured(true);
 
-        console.log('✅ State updated - bothCaptured: true, capturedUris set');
+        // Navigate immediately using event data directly — avoids React state
+        // update being async which would cause capturedUris to still be null
+        if (!hasNavigatedRef.current && event.frontUri) {
+          hasNavigatedRef.current = true;
+          console.log('✅ Navigating to Result screen from DeviceEventEmitter handler');
+          navigation.navigate('Result', {
+            imageUri: event.frontUri,
+            sideImageUri: event.sideUri || '',
+          });
+        }
       },
     );
 
@@ -87,23 +96,26 @@ const CameraScreen: React.FC = () => {
     };
   }, [navigation, isFocused]);
 
-  const handleViewResults = () => {
-    console.log('🚀 handleViewResults called');
-    console.log('📸 capturedUris:', capturedUris);
+  const handleViewResults = (params?: { imageUri: string; sideImageUri: string }) => {
+    console.log('🚀 handleViewResults called', params);
 
-    if (capturedUris) {
-      console.log('✅ Navigating to Result screen with:');
-      console.log('   Front URI:', capturedUris.frontUri);
-      console.log('   Side URI:', capturedUris.sideUri);
+    // Called via the direct onBothCaptured native event with image paths
+    if (params?.imageUri && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
+      navigation.navigate('Result', {
+        imageUri: params.imageUri,
+        sideImageUri: params.sideImageUri || '',
+      });
+      return;
+    }
 
+    // Fallback: user tapped the "View Results" button — use stored state
+    if (capturedUris && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
       navigation.navigate('Result', {
         imageUri: capturedUris.frontUri || '',
         sideImageUri: capturedUris.sideUri || '',
       });
-
-      console.log('✅ Navigation.navigate() called');
-    } else {
-      console.log('❌ ERROR: capturedUris is null, cannot navigate');
     }
   };
 

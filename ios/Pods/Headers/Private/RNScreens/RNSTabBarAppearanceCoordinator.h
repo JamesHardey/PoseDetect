@@ -1,1 +1,1 @@
-../../../../../node_modules/react-native-screens/ios/bottom-tabs/RNSTabBarAppearanceCoordinator.h
+../../../../../node_modules/react-native-screens/ios/tabs/RNSTabBarAppearanceCoordinator.h

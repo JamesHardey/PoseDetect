@@ -11,6 +11,7 @@ public struct RecognizedPointCompat {
 // Use custom ML Kit joint names (supports all 33 landmarks)
 public enum MLKitJointName: Hashable {
     case nose, leftEye, rightEye, leftEar, rightEar
+    case leftEyeInner, leftEyeOuter, rightEyeInner, rightEyeOuter
     case leftShoulder, rightShoulder, leftElbow, rightElbow
     case leftWrist, rightWrist, leftPinky, rightPinky
     case leftIndex, rightIndex, leftThumb, rightThumb
@@ -146,6 +147,10 @@ class PoseOverlayView: UIView {
     private func drawConnections(context: CGContext, landmarks: PoseLandmarks, scaleX: CGFloat, scaleY: CGFloat) {
         let connections: [(MLKitJointName, MLKitJointName)] = [
             // Face connections
+            (.leftEyeInner, .leftEye),
+            (.leftEye, .leftEyeOuter),
+            (.rightEyeInner, .rightEye),
+            (.rightEye, .rightEyeOuter),
             (.leftEye, .rightEye),
             (.leftEye, .nose),
             (.rightEye, .nose),
@@ -163,19 +168,37 @@ class PoseOverlayView: UIView {
             (.leftHip, .leftKnee),
             (.leftKnee, .leftAnkle),
             (.rightHip, .rightKnee),
-            (.rightKnee, .rightAnkle)
-            // Note: Hand/foot detail connections removed - not available in iOS ML Kit
+            (.rightKnee, .rightAnkle),
+            // Foot connections
+            (.leftAnkle, .leftHeel),
+            (.leftHeel, .leftFootIndex),
+            (.rightAnkle, .rightHeel),
+            (.rightHeel, .rightFootIndex),
+            // Hand connections
+            (.leftWrist, .leftThumb),
+            (.leftWrist, .leftIndex),
+            (.leftWrist, .leftPinky),
+            (.rightWrist, .rightThumb),
+            (.rightWrist, .rightIndex),
+            (.rightWrist, .rightPinky),
+            // Mouth connection
+            (.mouthLeft, .mouthRight)
         ]
         
         for (start, end) in connections {
             // Default to green unless accuracy indicates otherwise
             var lineColor = UIColor.green.cgColor
-            var lineWidth: CGFloat = 4.0
+            var lineWidth: CGFloat = 2.0
             
-            // Make ankle connections more prominent
-            if (start == .leftKnee && end == .leftAnkle) || (start == .rightKnee && end == .rightAnkle) {
-                lineWidth = 6.0  // Thicker lines for leg-to-ankle connections
-                lineColor = UIColor.cyan.cgColor  // Distinct color
+            // Make ankle/foot connections more prominent
+            let footConnections: [(MLKitJointName, MLKitJointName)] = [
+                (.leftKnee, .leftAnkle), (.rightKnee, .rightAnkle),
+                (.leftAnkle, .leftHeel), (.rightAnkle, .rightHeel),
+                (.leftHeel, .leftFootIndex), (.rightHeel, .rightFootIndex)
+            ]
+            if footConnections.contains(where: { $0 == start && $1 == end }) {
+                lineWidth = 3.0
+                lineColor = UIColor.cyan.cgColor
             }
             
             context.setLineWidth(lineWidth)
@@ -187,9 +210,11 @@ class PoseOverlayView: UIView {
                      (.leftEye, .leftEar), (.rightEye, .rightEar):
                     isAccurate = true
                 // Arm connections - use elbow accuracy
-                case (.leftShoulder, .leftElbow), (.leftElbow, .leftWrist):
+                case (.leftShoulder, .leftElbow), (.leftElbow, .leftWrist),
+                     (.leftWrist, .leftThumb), (.leftWrist, .leftIndex), (.leftWrist, .leftPinky):
                     isAccurate = acc.elbowAccurateLeft
-                case (.rightShoulder, .rightElbow), (.rightElbow, .rightWrist):
+                case (.rightShoulder, .rightElbow), (.rightElbow, .rightWrist),
+                     (.rightWrist, .rightThumb), (.rightWrist, .rightIndex), (.rightWrist, .rightPinky):
                     isAccurate = acc.elbowAccurateRight
                 // Body/leg and shoulder/hip lines — keep green (not validated here)
                 case (.leftShoulder, .leftHip), (.leftHip, .leftKnee), (.leftKnee, .leftAnkle),
@@ -227,13 +252,14 @@ class PoseOverlayView: UIView {
         for (joint, point) in landmarks {
             // Default to green unless accuracy indicates otherwise
             var dotColor = UIColor.green.cgColor
-            var radius: CGFloat = 8.0
+            var radius: CGFloat = 4.0
             
             if let acc = accuracy {
                 let isAccurate: Bool
                 switch joint {
                 // Face landmarks always green
-                case .nose, .leftEye, .rightEye, .leftEar, .rightEar, .mouthLeft, .mouthRight:
+                case .nose, .leftEye, .rightEye, .leftEar, .rightEar, .mouthLeft, .mouthRight,
+                     .leftEyeInner, .leftEyeOuter, .rightEyeInner, .rightEyeOuter:
                     isAccurate = true
                 // Left arm landmarks - use left elbow accuracy as proxy
                 case .leftShoulder, .leftElbow, .leftWrist, .leftThumb, .leftIndex, .leftPinky:
@@ -244,11 +270,11 @@ class PoseOverlayView: UIView {
                 // Legs / hips - keep green (not validated in this view)
                 case .leftHip, .leftKnee, .rightHip, .rightKnee:
                     isAccurate = true
-                // Ankle/foot landmarks - make them more prominent with larger radius and cyan color
+                // Ankle/foot landmarks - cyan color
                 case .leftAnkle, .rightAnkle, .leftHeel, .leftFootIndex, .rightHeel, .rightFootIndex:
                     isAccurate = true
-                    radius = 12.0  // Larger radius for feet
-                    dotColor = UIColor.cyan.cgColor  // Distinct color for feet
+                    radius = 6.0
+                    dotColor = UIColor.cyan.cgColor
                 default:
                     isAccurate = true
                 }
